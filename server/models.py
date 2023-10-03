@@ -1,5 +1,7 @@
 from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy import Checkconstraints
+from sqlalchemy.orm import validates
 
 from config import db
 
@@ -21,6 +23,7 @@ class Creature(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     bug_name = db.Column(db.String, primary_key=True)
     image = db.Column(db.String)
+    bug_description = db.Column(db.String)
     
     bug_bites = db.relationship("BugBite", secondary="biter", back_populates="creatures")
 
@@ -30,6 +33,12 @@ class BugBite(db.Model):
     bite_description = db.Column(db.String)
     symptoms = db.Column(db.String)
     severity_of_bite = db.Column(db.String)
+
+    @validates("bite_description")
+    def validate_description(self, key, bite_description):
+        if len(bite_description) < 10:
+            raise ValueError("Bite description must be at least 10 characters ")
+        return bite_description
 
     creatures = db.relationship("Creature", secondary="biter", back_populate="creatures")
 
