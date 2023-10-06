@@ -1,12 +1,15 @@
-from sqlalchemy_serializer import SerializerMixin
+
+from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy import CheckConstraint
 from sqlalchemy.orm import validates
 
+db = SQLAlchemy()
+
 from config import db
 
 # Models go here!
-class User(db.Model, SerializerMixin):
+class User(db.Model):
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, unique=True, nullable=False)
@@ -25,7 +28,7 @@ class User(db.Model, SerializerMixin):
         self.email = email
         self.password = password
 
-class Creature(db.Model, SerializerMixin):
+class Creature(db.Model):
     __tablename__ = "creatures"
     id = db.Column(db.Integer, primary_key=True)
     bug_name = db.Column(db.String, primary_key=True)
@@ -37,7 +40,12 @@ class Creature(db.Model, SerializerMixin):
 
     bite_descriptions = association_proxy("bug_bites", "bite_description")
 
-class BugBite(db.Model, SerializerMixin):
+class BiteTreatment(db.Model):
+    __tablename__ = "bite_treatments"
+    id = db.Column(db.Integer, primary_key=True)
+    treatment_plan = db.Column(db.String)
+
+class BugBite(db.Model):
     __tablename__ = "bug_bites"
     id = db.Column(db.Integer, primary_key=True)
     bite_description = db.Column(db.String, nullable=False)
@@ -46,7 +54,7 @@ class BugBite(db.Model, SerializerMixin):
     ) 
     symptoms = db.Column(db.String)
     severity_of_bite = db.Column(db.String)
-    treatment_plan_id = db.Column(db.Integer, db.ForeignKey("bite_treatment.id"))
+    treatment_plan_id = db.Column(db.Integer, db.ForeignKey("bite_treatments.id"))
     
     # validate description length
     @validates("bite_description")
@@ -61,7 +69,3 @@ class BugBite(db.Model, SerializerMixin):
     #one to many with BiteTreatment model
     treatment_plan = db.relationship("BiteTreatment", back_populates="bug_bites")
 
-class BiteTreatment(db.Model, SerializerMixin):
-    __tablename__ = "bite_treatments"
-    id = db.Column(db.Integer, primary_key=True)
-    treatment_plan = db.Column(db.String)
