@@ -95,4 +95,4 @@ class BugBiteSchema(Schema):
     symptoms = fields.String()
     severity_of_bite = fields.String()
     treatment_plan_id = fields.Integer(required=True)
-    creatures = fields.list(fields.String())
+    creatures = fields.List(fields.String())
