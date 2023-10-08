@@ -9,17 +9,19 @@ from marshmallow.exceptions import ValidationError
 # Remote library imports
 from flask import request, jsonify
 from flask_restful import Resource, Api, reqparse
+from sqlalchemy import or_
 
 # Local imports
 from config import app, db, api
-# Add your model imports
-from models import User, Creature, BugBite, BiteTreatment
-from schemas import UserSchema, CreatureSchema, BugBiteSchema, BiteTreatmentSchema
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.json.compact = False
+
+# Add your model imports
+from models import User, Creature, BugBite, BiteTreatment
+from schemas import UserSchema, CreatureSchema, BugBiteSchema, BiteTreatmentSchema
 
 migrate = Migrate(app, db)
 db.init_app(app)
@@ -28,12 +30,14 @@ api = Api(app)
 
 
 # Views go here!
-
+@app.route('/')
+def index():
+    return '<h1>Welcome to the WhoBitMe App<h1>' 
 
 #Get/search for current user
 @app.route('/get_user/<int:user_id>', methods=['GET'])
 def get_user(user_id):
-    user = User.query.get(user_id)
+    user = db.session.query(User).get(user_id)
 
     if user:
         user_schema = UserSchema()
@@ -53,7 +57,7 @@ def create_user():
     except ValidationError as err:
         return jsonify(err.messages), 400
 
-    already_user = User.query.filter_by(email=new_user.email).first()
+    already_user = User.query.filter(email=new_user.email).first()
     if already_user:
         return jsonify({"message": "User already exists"}), 400    
 
@@ -67,7 +71,10 @@ def create_user():
 @app.route('/search_creatures', methods=['GET'])
 def search_creatures():
     keywords = request.args.get('keywords', '').split(',')
-    creatures = Creature.query.filter(Creature.bug_description(f"%{'%'.join(keywords)}%")).all()
+    filter_conditions = [Creature.bug_description.like(f"%{keyword}%") for keyword in keywords]
+    query = Creature.query.filter(or_(*filter_conditions))
+
+    creatures = query.all() 
     creature_schema = CreatureSchema(many=True)
     creatures_data = creature_schema.dump(creatures)
 

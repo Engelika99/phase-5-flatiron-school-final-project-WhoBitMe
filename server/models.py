@@ -1,16 +1,18 @@
-
-from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy import CheckConstraint
 from sqlalchemy.orm import validates
-from marshmallow import Schema, fields, validate
 from marshmallow.validate import Length
-
-db = SQLAlchemy()
 
 from config import db
 
 # Models go here!
+biter = db.Table(
+    "biter",
+    db.Column("creature_id", db.Integer, db.ForeignKey("creatures.id")),
+    db.Column("bug_bite_id", db.Integer, db.ForeignKey("bug_bites.id")),
+    db.PrimaryKeyConstraint("creature_id", "bug_bite_id")
+    )
+
 class User(db.Model):
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
@@ -33,19 +35,24 @@ class User(db.Model):
 class Creature(db.Model):
     __tablename__ = "creatures"
     id = db.Column(db.Integer, primary_key=True)
-    bug_name = db.Column(db.String, primary_key=True)
+    bug_name = db.Column(db.String, nullable=False)
     image = db.Column(db.String)
     bug_description = db.Column(db.String)
+
+    def __repr__(self):
+        return f"<Creature(id={self.id}, bug_name='{self.bug_name}', image='{self.image}', bug_description='{self.bug_description}')>"
    
     # Many to Many with BugBite model
     bug_bites = db.relationship("BugBite", secondary="biter", back_populates="creatures")
-
+    
     bite_descriptions = association_proxy("bug_bites", "bite_description")
 
 class BiteTreatment(db.Model):
     __tablename__ = "bite_treatments"
     id = db.Column(db.Integer, primary_key=True)
     treatment_plan = db.Column(db.String)
+
+    bug_bites = db.relationship("BugBite", back_populates="treatment_plan")
 
 class BugBite(db.Model):
     __tablename__ = "bug_bites"
@@ -66,34 +73,8 @@ class BugBite(db.Model):
         return bite_description
    
     # Many to Many with creature model
-    creatures = db.relationship("Creature", secondary="biter", back_populates="creatures")
+    creatures = db.relationship("Creature", secondary="biter", back_populates="bug_bites")
     
     #one to many with BiteTreatment model
     treatment_plan = db.relationship("BiteTreatment", back_populates="bug_bites")
 
-class UserSchema(Schema):
-    id = fields.Integer(dump_only=True)
-    username = fields.String(required=True, validate=validate.Length(min=1))
-    email = fields.String(required=True)
-    password = fields.String(required=True, validate=validate.Length(min=8))
-
-class CreatureSchema(Schema):
-    id = fields.Integer(dump_only=True)
-    bug_name = fields.String(required=True)
-    image = fields.String()
-    bug_description = fields.String(required=True)
-
-
-class BiteTreatmentSchema(Schema):
-    id = fields.Integer(dump_only=True)
-    treatment_plan = fields.String()
-
-
-
-class BugBiteSchema(Schema):
-    id = fields.Integer(dump_only=True)
-    bite_description = fields.String(required=True, validate=validate.Length(min=10))
-    symptoms = fields.String()
-    severity_of_bite = fields.String()
-    treatment_plan_id = fields.Integer(required=True)
-    creatures = fields.List(fields.String())
