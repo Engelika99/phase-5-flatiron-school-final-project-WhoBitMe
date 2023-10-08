@@ -65,6 +65,17 @@ def create_user():
     result = user_schema.dump(new_user)
     return jsonify({"message": "User created successfully", "user": result})  
 
+# request treatment plan based on keywords received
+@app.route('/search_creatures', methods=['GET'])
+def search_creatures():
+    keywords = request.args.get('keywords', '').split(',')
+    creatures = Creature.query.filter(Creature.bug_description(f"%{'%'.join(keywords)}%")).all()
+    creature_schema = CreatureSchema(many=True)
+    creatures_data = creature_schema.dump(creatures)
+
+    return jsonify({"creatures": creatures_data}), 200
+
+
 
 
 if __name__ == '__main__':
