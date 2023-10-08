@@ -14,7 +14,7 @@ faker = "*"
 marshmallow = "*"
 flask-marshmallow = "*"
 marshmallow-sqlalchemy = "*"
-
+requests = "*"
 
 [requires]
 python_full_version = "3.8.13"

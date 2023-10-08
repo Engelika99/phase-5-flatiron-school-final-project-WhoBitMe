@@ -8,7 +8,7 @@ from marshmallow.exceptions import ValidationError
 
 # Remote library imports
 from flask import request, jsonify
-from flask_restful import Resource, Api
+from flask_restful import Resource, Api, reqparse
 
 # Local imports
 from config import app, db, api
@@ -74,8 +74,67 @@ def search_creatures():
     creatures_data = creature_schema.dump(creatures)
 
     return jsonify({"creatures": creatures_data}), 200
+# Use restful for bug bite
+class BugBiteResource(Resource):
+    def __init__(self):
+        self.parser = reqparse.RequestParser()
+        self.parser.add_argument('bite_description', type=str, required=True, help='Bite description')
+        self.parser.add_argument('symptoms', type=str, help='Symptoms of the bite')
+        self.parser.add_argument('severity_of_bite', type=str, help='Severity of the bite')
+        self.parser.add_argument('treatment_plan_id', type=int, required=True, help='Treatment plan ID')
 
+    def get(self, bug_bite_id):
+        bug_bite = BugBite.query.get(bug_bite_id)
 
+        if bug_bite:
+            bug_bite_schema = BugBiteSchema()
+            result = bug_bite_schema.dump(bug_bite)
+            return jsonify(result), 200
+        else:
+            return jsonify({"message": "BugBite not found"}), 404
+        
+    def put(self,bug_bite_id):
+        bug_bite = BugBite.query.get(bug_bite_id)
+
+        if bug_bite:
+            data = self.parser.parse_args()
+            bug_bite_schema = BugBiteSchema()
+
+            try:
+                update_bug_bite = bug_bite_schema.load(data, instance=bug_bite, partial=True)
+            except ValidationError as err:
+                return jsonify(err.messages), 400
+            
+            db.session.commit()
+            result = bug_bite_schema.dump(update_bug_bite)
+            return jsonify({"message": "BugBite updated successfully", "bug_bite": result}), 200
+        else:
+            return jsonify({"message": "BugBite not found"}), 404
+        
+    def post(self):
+        data = self.parser.parse_args()
+        bug_bite_schema = BugBiteSchema()
+
+        try:
+            new_bug_bite = bug_bite_schema.load(data)
+        except ValidationError as err:
+            return jsonify(err.messages), 400
+        db.session.add(new_bug_bite)
+        db.session.commit()
+        result = bug_bite_schema.dump(new_bug_bite)
+        return jsonify({"message": "BugBite created successfully", "bug_bite": result}), 201
+        
+    def delete(self, bug_bite_id):
+        bug_bite = BugBite.query.get(bug_bite_id)
+
+        if bug_bite:
+            db.session.delete(bug_bite)
+            db.session.commit()
+            return jsonify({"message": "BugBite deleted successfully"}), 200
+        else:
+            return jsonify({"message": "BugBite not found"}), 404
+        
+api.add_resource(BugBiteResource, '/bug_bites/<int:bug_bite_id>')
 
 
 if __name__ == '__main__':
