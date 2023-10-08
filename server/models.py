@@ -4,6 +4,7 @@ from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy import CheckConstraint
 from sqlalchemy.orm import validates
 from marshmallow import Schema, fields, validate
+from marshmallow.validate import Length
 
 db = SQLAlchemy()
 
