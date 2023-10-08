@@ -78,3 +78,5 @@ class BugBite(db.Model):
     #one to many with BiteTreatment model
     treatment_plan = db.relationship("BiteTreatment", back_populates="bug_bites")
 
+
+
