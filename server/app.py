@@ -29,9 +29,7 @@ api = Api(app)
 
 # Views go here!
 
-@app.route('/')
-def index():
-    return '<h1>Project Server</h1>'
+
 #Get/search for current user
 @app.route('/get_user/<int:user_id>', methods=['GET'])
 def get_user(user_id):
@@ -74,6 +72,7 @@ def search_creatures():
     creatures_data = creature_schema.dump(creatures)
 
     return jsonify({"creatures": creatures_data}), 200
+
 # Use restful for bug bite
 class BugBiteResource(Resource):
     def __init__(self):
@@ -135,6 +134,24 @@ class BugBiteResource(Resource):
             return jsonify({"message": "BugBite not found"}), 404
         
 api.add_resource(BugBiteResource, '/bug_bites/<int:bug_bite_id>')
+
+#get bite treatment based on input of bite and creature
+@app.route('/bite_treatments', methods=['GET'])
+def get_bite_treatments_by_descriptions():
+    bite_description = request.args.get('bite_description')
+    creature_description = request.args.get('creature_description')
+    query = BiteTreatment.query
+
+    if bite_description:
+        query = query.filter(BiteTreatment.bite_description == bite_description)
+
+    if creature_description:
+        query = query.join(BiteTreatment.creatures).filter(Creature.bug_description == creature_description)
+
+    bite_treatments = query.all()
+    bite_treatment_schema = BiteTreatmentSchema(many=True)
+    result = bite_treatment_schema.dump(bite_treatments)
+    return jsonify(result), 200
 
 
 if __name__ == '__main__':
