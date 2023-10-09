@@ -25,12 +25,15 @@ class User(db.Model):
         if "@" not in email:
             raise ValueError("Invalid email.")
         return email
-        
     
     def __init__(self, username, email, password):
         self.username = username
         self.email = email
         self.password = password
+
+#one-to-many with bugbite
+    bug_bites = db.relationship("BugBite", back_populates="user")    
+    
 
 class Creature(db.Model):
     __tablename__ = "creatures"
@@ -71,7 +74,12 @@ class BugBite(db.Model):
         if len(bite_description) < 10:
             raise ValueError("Bite description must be at least 10 characters ")
         return bite_description
+    
+    #many-to-one with user
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    user = db.relationship("User", back_populates="bug_bites")
    
+
     # Many to Many with creature model
     creatures = db.relationship("Creature", secondary="biter", back_populates="bug_bites")
     
