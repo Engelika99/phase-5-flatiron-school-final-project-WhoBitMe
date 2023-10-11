@@ -1,7 +1,7 @@
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy import CheckConstraint
 from sqlalchemy.orm import validates
-from marshmallow.validate import Length
+from flask_login import UserMixin
 
 from config import db
 
@@ -13,7 +13,7 @@ biter = db.Table(
     db.PrimaryKeyConstraint("creature_id", "bug_bite_id")
     )
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, unique=True, nullable=False)
